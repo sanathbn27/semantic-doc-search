@@ -1,0 +1,17 @@
+# Web framework
+fastapi
+uvicorn[standard]
+
+# Data persistence
+sqlalchemy
+
+# Request/response validation
+pydantic
+
+# Embeddings (semantic search)
+sentence-transformers
+
+# Testing
+pytest
+httpx
+
