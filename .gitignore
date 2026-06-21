@@ -21,3 +21,4 @@ venv/
 # Editors
 .vscode/
 .idea/
+requirements-freeze.txt
