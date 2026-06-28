@@ -10,6 +10,7 @@ pydantic==2.13.4
 
 # Embeddings (semantic search)
 sentence-transformers==5.6.0
+numpy==2.4.6
 
 # Testing
 pytest==9.1.1

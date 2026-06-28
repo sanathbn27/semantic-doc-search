@@ -16,7 +16,7 @@ propulsion even if it doesn't contain those exact words.
    stored document's vector using cosine similarity. Results are
    returned ranked by similarity score, most relevant first.
 
-No vector database is used — similarity is computed directly with numpy,
+No vector database is used, similarity is computed directly with numpy,
 which is sufficient at this scale (a handful of documents).
 
 ## Tech stack
@@ -28,22 +28,35 @@ which is sufficient at this scale (a handful of documents).
 - **sentence-transformers** (`all-MiniLM-L6-v2`) — embeddings, runs
   locally, no API key required
 
+## Getting the code
+
+```bash
+git clone https://github.com/sanathbn27/semantic-doc-search.git
+cd semantic-doc-search
+```
+
 ## Setup
 
 Requires Python 3.11+. (Python 3.9 will fail to install one dependency
 on Windows without a C++ compiler — use 3.11 or newer.)
 
 ```bash
-python -m venv .venv
+py -3.11 -m venv .venv          # Windows — use py launcher to force 3.11
+python3.11 -m venv .venv         # macOS/Linux equivalent, if multiple versions installed
+
 source .venv/bin/activate        # macOS/Linux
 .venv\Scripts\Activate.ps1       # Windows PowerShell
 
 pip install -r requirements.txt
 ```
 
+**Note:** plain `python -m venv` may pick up an older Python version if multiple are installed (e.g. Python 3.9 via Anaconda). If `pip install` fails with a build error mentioning `greenlet` or a missing C++ compiler, this is almost always the cause — recreate the venv forcing Python 3.11 specifically as shown above.
+
 The first run downloads the embedding model (~90MB) from Hugging Face.
 This requires an internet connection once; it's cached locally after
 that.
+
+
 
 ## Run
 
@@ -52,10 +65,25 @@ uvicorn app.main:app --reload
 ```
 
 The API is now running at `http://127.0.0.1:8000`. Interactive docs
-(Swagger UI) are available at `http://127.0.0.1:8000/docs` — every
+(Swagger UI) are available at `http://127.0.0.1:8000/docs`, every
 endpoint below can be tried directly from there.
 
 ## API
+
+### Seeding sample data
+
+A helper script if needed, `seed.py`, posts the 5 sample documents from the spec
+to a running instance of the API:
+
+```bash
+python seed.py
+```
+
+**Note:** this script always creates new documents, it doesn't check
+whether they already exist. Running it more than once against the same
+database will create duplicate entries, which will appear redundantly
+in search results. Use it once against a fresh `documents.db`, or
+delete `documents.db` before re-running it.
 
 ### `POST /documents`
 
@@ -71,6 +99,8 @@ Store a new document. Computes and stores its embedding.
 Returns the stored document (`201 Created`) with its generated `id` and
 `created_at`. The internal embedding is never exposed in API responses.
 
+
+
 ### `GET /documents/search?q=<query>&top_k=<n>`
 
 Search stored documents by semantic similarity to `q`. `top_k` is
@@ -82,15 +112,14 @@ optional, defaults to 5.
     "id": 1,
     "title": "RCS Thruster Firing Procedure",
     "content": "...",
-    "score": 0.91
+    "score": 0.56
   }
 ]
 ```
 
 ### `DELETE /documents/{id}`
 
-Deletes a document by id. Returns `204 No Content` on success, `404` if
-the id doesn't exist.
+Deletes a document by id. Returns `204 No Content` on success, `404` if the id doesn't exist.
 
 ## Project structure
 ```
