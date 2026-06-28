@@ -109,3 +109,19 @@ def test_search_rejects_empty_query(client):
     response = client.get("/documents/search", params={"q": "   "})
 
     assert response.status_code == 422
+
+
+def test_search_with_filter_title_restricts_candidates(client):
+    seed_documents(client)
+
+    response = client.get(
+        "/documents/search",
+        params={"q": "heat pipe", "filter_title": "thermal"},
+    )
+
+    assert response.status_code == 200
+    results = response.json()
+
+    assert len(results) > 0
+    for result in results:
+        assert "thermal" in result["title"].lower()

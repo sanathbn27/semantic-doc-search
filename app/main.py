@@ -29,27 +29,32 @@ def create_document(payload: DocumentCreate, db: Session = Depends(get_db)):
     return document
 
 @app.get("/documents/search", response_model=list[DocumentSearchResult])
-def search_documents(q: str, top_k: int = 5, db: Session = Depends(get_db)):
+def search_documents(
+    q: str,
+    top_k: int = 5,
+    filter_title: str | None = None,
+    db: Session = Depends(get_db),
+):
     if not q.strip():
         raise HTTPException(status_code=422, detail="Query parameter 'q' cannot be empty")
 
     query_vector = encode(q)
-    documents = db.query(Document).all()
+
+    query = db.query(Document)
+    if filter_title:
+        query = query.filter(Document.title.contains(filter_title))
+    documents = query.all()
 
     ranked = rank_documents(query_vector, documents, top_k=top_k)
 
     results = []
     for doc, score in ranked:
         results.append(
-            DocumentSearchResult(
-                id=doc.id,
-                title=doc.title,
-                content=doc.content,
-                score=score,
-            )
+            DocumentSearchResult(id=doc.id, title=doc.title, content=doc.content, score=score)
         )
 
     return results
+
 
 @app.delete("/documents/{document_id}", status_code=204)
 def delete_document(document_id: int, db: Session = Depends(get_db)):
@@ -61,3 +66,5 @@ def delete_document(document_id: int, db: Session = Depends(get_db)):
 
     db.delete(document)
     db.commit()
+
+
